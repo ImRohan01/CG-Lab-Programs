@@ -1,91 +1,82 @@
-#include <GL/glut.h>
+#include<GL/glut.h>
+#include<stdio.h>
 
-void draw_pixel(GLint cx, GLint cy)
+int m;
+
+typedef float point[3];
+
+point tetra[4] = { {0,100,-100},{0,0,100},{100,-100,-100},{-100,-100,-100} };
+
+void tetrahedron(void);
+void myinit(void);
+void divide_triangle(point a, point b, point c, int m);
+void draw_triangle(point p1, point p2, point p3);
+
+int main(int argv, char** argc)
 {
-	glColor3f(1.0,0.0,0.0);
-	glBegin(GL_POINTS);
-	glVertex2i(cx,cy);
-	glEnd();
+	//int m;
+	printf("Enter the number of iterations: ");
+	scanf("%d", &m);
+	glutInit(&argv, argc);
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
+	glutInitWindowPosition(100, 200);
+	glutInitWindowSize(500, 500);
+	glutCreateWindow("Seirpinski Gasket");
+	glutDisplayFunc(tetrahedron);
+	glEnable(GL_DEPTH_TEST);
+	myinit();
+	glutMainLoop();
 }
 
-void plotpixels(GLint h, GLint k, GLint x, GLint y)
+void divide_triangle(point a, point b, point c, int m)
 {
-	draw_pixel(x+h,y+k);
-	draw_pixel(-x+h,y+k);
-	draw_pixel(x+h,-y+k);
-	draw_pixel(-x+h,-y+k);
-	draw_pixel(y+h,x+k);
-	draw_pixel(-y+h,x+k);
-	draw_pixel(y+h,-x+k);
-	draw_pixel(-y+h,-x+k);
-}
+	point v1, v2, v3;
+	int j;
+	if (m > 0) {
+		for (j = 0; j < 3; j++)
+			v1[j] = (a[j] + b[j]) / 2;
+		for (j = 0; j < 3; j++)
+			v2[j] = (a[j] + c[j]) / 2;
+		for (j = 0; j < 3; j++)
+			v3[j] = (b[j] + c[j]) / 2;
 
-void Circle_draw(GLint h, GLint k, GLint r) 
-{
-	GLint d = 1-r, x=0, y=r;
-	while(y > x)
-	{
-		plotpixels(h,k,x,y);
-		if(d < 0)
-			d+=2*x+3;
-		else
-		{
-			d+=2*(x-y)+5;
-			--y;
-		}
-		++x;
+		divide_triangle(a, v1, v2, m - 1);
+		divide_triangle(c, v2, v3, m - 1);
+		divide_triangle(b, v3, v1, m - 1);
 	}
-	plotpixels(h,k,x,y);
+	else
+		draw_triangle(a, b, c);
 }
 
-void Cylinder_draw()
+void myinit()
 {
-	GLint xc=100, yc=100, r=50, i,n=50;
-	for(i=0;i<n;i+=3)
-		Circle_draw(xc,yc+i,r);
+	glClearColor(1, 1, 1, 1);
 
+	//glFlush();
+	glOrtho(-500.0, 500.0, -500.0, 500.0, -500.0, 500.0);
+	//gluOrtho(-500.0,500.0,-500.0,500.0,-500.0,500.0);
 }
-void parallelepiped(int x1,int x2,int y1,int y2)
+
+void tetrahedron(void)
 {
+	//myinit();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glColor3f(1.0, 0.0, 0.0);
+	divide_triangle(tetra[0], tetra[1], tetra[2], m);
+	glColor3f(0.0, 1.0, 0.0);
+	divide_triangle(tetra[3], tetra[2], tetra[1], m);
 	glColor3f(0.0, 0.0, 1.0);
-	glBegin(GL_LINE_LOOP);
-	glVertex2i(x1,y1);
-	glVertex2i(x2,y1);
-	glVertex2i(x2,y2);
-	glVertex2i(x1,y2);
-	glEnd();
-}
-
-void parallelepiped_draw()
-{
-	int x1=200, x2=300, y1=100, y2=175, i, n=40;
-	for(i=0;i<n;i+=2)
-		parallelepiped(x1+i,x2+i,y1+i,y2+i);
-}
-
-void init(void)
-{
-	glClearColor(1.0,1.0,1.0,0.0);
-	glMatrixMode(GL_PROJECTION);
-	gluOrtho2D(0.0,400.0,0.0,300.0);
-}
-
-void display(void)
-{
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(1.0,0.0,0.0);
-	Cylinder_draw();
-	parallelepiped_draw();
+	divide_triangle(tetra[0], tetra[3], tetra[1], m);
+	glColor3f(0.0, 0.0, 0.0);
+	divide_triangle(tetra[0], tetra[2], tetra[3], m);
 	glFlush();
 }
 
-int main(int argc, char **argv)
+void draw_triangle(point p1, point p2, point p3)
 {
-	glutInit(&argc,argv);
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-	glutInitWindowSize(400,300);
-	glutCreateWindow("Program 3");
-	init();
-	glutDisplayFunc(display);
-	glutMainLoop();
+	glBegin(GL_TRIANGLES);
+	glVertex3fv(p1);
+	glVertex3fv(p2);
+	glVertex3fv(p3);
+	glEnd();
 }
